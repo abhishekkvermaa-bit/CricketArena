@@ -1,30 +1,42 @@
 import React from 'react';
 import {View, StyleSheet} from 'react-native';
 import PlayerCard from './PlayerCard';
-import { StatName, GameState } from '../types';
+import { StatName, GameState, Player } from '../types';
 
 type CardDeckProps = {
-  deck: any[];
+  deck: Player[];
   gameState: GameState;
   isComputer: boolean;
   selectedStat?: StatName | null;
   isBlurred?: boolean;
+  direction: 'left' | 'right';
 };
 
-function CardDeck({deck, gameState, isComputer, selectedStat, isBlurred = false}: CardDeckProps) {
-  const cardsToShow = Math.min(deck.length, 5);
+function CardDeck({deck, gameState, isComputer, selectedStat, isBlurred = false, direction}: CardDeckProps) {
+  const cardsToShow = Math.min(deck.length, 10);
   const stack = Array.from({length: cardsToShow});
   
-  const isFaceDown = isComputer && gameState === 'selecting';
+  // --- THIS IS THE NEW, CORRECT LOGIC ---
+  let mode: 'image-only' | 'stats-visible' | 'face-down';
+
+  if (gameState === 'revealing' || gameState === 'game_over') {
+    // In the reveal or game over state, BOTH cards show their stats.
+    mode = 'stats-visible';
+  } else {
+    // In any other state ('dealing' or 'selecting'), determine based on who the card is.
+    mode = isComputer ? 'face-down' : 'image-only';
+  }
+  // ------------------------------------
 
   return (
     <View style={styles.deckContainer}>
       {stack.map((_, index) => {
         const isTopCard = index === cardsToShow - 1;
         
+        const offset = direction === 'left' ? -10 : 10;
         const cardStyle = {
           position: 'absolute' as 'absolute',
-          transform: [{translateY: index * 4}, {translateX: index * 2}],
+          transform: [{translateX: index * offset}],
           zIndex: index,
         };
         
@@ -33,7 +45,7 @@ function CardDeck({deck, gameState, isComputer, selectedStat, isBlurred = false}
             <View key={deck[0].id} style={cardStyle}>
               <PlayerCard 
                 player={deck[0]} 
-                mode={isFaceDown ? 'face-down' : (gameState === 'revealing' ? 'stats-visible' : 'image-only')}
+                mode={mode} // Use our new, correct mode
                 selectedStat={selectedStat}
                 isComputer={isComputer}
                 isBlurred={isBlurred}
@@ -51,8 +63,20 @@ function CardDeck({deck, gameState, isComputer, selectedStat, isBlurred = false}
 }
 
 const styles = StyleSheet.create({
-  deckContainer: { width: 220, height: 320 },
-  cardBack: { width: 200, height: 300, backgroundColor: 'transparent', borderRadius: 20, borderWidth: 5, borderColor: '#D4AF37', alignSelf: 'center' },
+  deckContainer: {
+    width: 200 + (10 * 10),
+    height: 320,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cardBack: {
+    width: 200,
+    height: 300,
+    backgroundColor: 'transparent',
+    borderRadius: 20,
+    borderWidth: 5,
+    borderColor: '#D4AF37',
+  },
 });
 
 export default CardDeck;

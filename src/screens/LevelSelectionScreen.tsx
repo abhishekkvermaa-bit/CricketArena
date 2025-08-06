@@ -6,7 +6,6 @@ import {
   SafeAreaView,
   TouchableOpacity,
 } from 'react-native';
-
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import type {RootStackParamList} from '../navigation/AppNavigator';
 
@@ -21,35 +20,33 @@ function LevelSelectionScreen({navigation}: Props) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}>
-        <Text style={styles.backButtonText}>{'< Back'}</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.title}>Select a Level</Text>
-
-      <View style={styles.levelContainer}>
-        {levels.map(level => (
-          <TouchableOpacity
-            key={level.id}
-            style={[
-              styles.levelButton,
-              level.isLocked && styles.lockedButton,
-            ]}
-            disabled={level.isLocked}
-            // --- THIS IS THE CHANGE ---
-            onPress={() => {
-              if (!level.isLocked) {
-                navigation.navigate('Gameplay');
-              }
-            }}
-            // --------------------------
-            >
-            <Text style={styles.levelButtonText}>{level.name}</Text>
-            {level.isLocked && <Text style={styles.lockIcon}>🔒</Text>}
-          </TouchableOpacity>
-        ))}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={styles.backButtonText}>{'< Back'}</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={styles.content}>
+        <Text style={styles.title}>Select a Level</Text>
+        <View style={styles.levelContainer}>
+          {levels.map(level => (
+            <TouchableOpacity
+              key={level.id}
+              style={[
+                styles.levelButton,
+                level.isLocked && styles.lockedButton,
+              ]}
+              disabled={level.isLocked}
+              onPress={() => {
+                if (!level.isLocked) {
+                  navigation.navigate('Gameplay');
+                }
+              }}
+              >
+              <Text style={styles.levelButtonText}>{level.name}</Text>
+              {level.isLocked && <Text style={styles.lockIcon}>🔒</Text>}
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -60,12 +57,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0C0C2D',
   },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+  },
   title: {
     fontSize: 32,
     color: '#FFFFFF',
     fontFamily: 'Poppins-Bold',
     textAlign: 'center',
-    marginTop: 20,
     marginBottom: 40,
   },
   levelContainer: {
@@ -92,12 +96,6 @@ const styles = StyleSheet.create({
   lockIcon: {
     fontSize: 20,
     marginLeft: 10,
-  },
-  backButton: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    zIndex: 1,
   },
   backButtonText: {
     color: '#FFFFFF',

@@ -1,10 +1,7 @@
 import {useState, useEffect} from 'react';
 import allPlayersData from '../assets/data/playerData.json';
-import { Player, StatName, isBattingStat, allStatKeys } from '../types';
+import { Player, StatName, isBattingStat, allStatKeys, GameState } from '../types';
 
-export type GameState = 'dealing' | 'selecting' | 'revealing' | 'game_over';
-
-// This is our new custom hook
 export function useGameLogic() {
   const [playerDeck, setPlayerDeck] = useState<Player[]>([]);
   const [computerDeck, setComputerDeck] = useState<Player[]>([]);
@@ -12,6 +9,9 @@ export function useGameLogic() {
   const [selectedStat, setSelectedStat] = useState<StatName | null>(null);
   const [roundWinner, setRoundWinner] = useState<'player' | 'computer' | 'draw' | null>(null);
   const [currentTurn, setCurrentTurn] = useState<'player' | 'computer'>('player');
+  const [cardsInPlay, setCardsInPlay] = useState<{player: Player | null, computer: Player | null}>({player: null, computer: null});
+  // This new state will act as a reliable key to force UI updates
+  const [roundNumber, setRoundNumber] = useState(0);
 
   useEffect(() => {
     setupGame();
@@ -21,10 +21,19 @@ export function useGameLogic() {
     if (currentTurn === 'computer' && gameState === 'selecting' && computerDeck.length > 0) {
       const timer = setTimeout(() => {
         handleComputerTurn();
-      }, 2000);
+      }, 1500);
       return () => clearTimeout(timer);
     }
   }, [currentTurn, gameState, computerDeck]);
+  
+  useEffect(() => {
+    if (gameState === 'revealing') {
+      const timer = setTimeout(() => {
+        setGameState('collecting');
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [gameState, roundWinner]);
 
   const setupGame = () => {
     const shuffleArray = (array: Player[]) => array.sort(() => Math.random() - 0.5);
@@ -36,6 +45,7 @@ export function useGameLogic() {
     setRoundWinner(null);
     setSelectedStat(null);
     setCurrentTurn('player');
+    setRoundNumber(0); // Reset round number for a new game
   };
 
   const handleComputerTurn = () => {
@@ -58,9 +68,10 @@ export function useGameLogic() {
     });
     handleStatSelect(bestStat);
   };
-
+  
   const handleStatSelect = (statName: StatName) => {
     if (gameState !== 'selecting') return;
+    setCardsInPlay({ player: playerDeck[0], computer: computerDeck[0] });
     const playerStatValue = getStatValue(playerDeck[0], statName);
     const computerStatValue = getStatValue(computerDeck[0], statName);
     let winner: 'player' | 'computer' | 'draw' = 'draw';
@@ -76,7 +87,7 @@ export function useGameLogic() {
     setGameState('revealing');
   };
 
-  const handleNextRound = () => {
+  const finalizeRound = () => {
     const playerCard = playerDeck[0];
     const computerCard = computerDeck[0];
     const newPlayerDeck = playerDeck.slice(1);
@@ -96,6 +107,9 @@ export function useGameLogic() {
     setPlayerDeck(newPlayerDeck);
     setComputerDeck(newComputerDeck);
     
+    // Increment the round number to trigger a UI refresh
+    setRoundNumber(prev => prev + 1);
+
     if (newPlayerDeck.length === 0 || newComputerDeck.length === 0) {
       setGameState('game_over');
     } else {
@@ -125,18 +139,19 @@ export function useGameLogic() {
     return parsedValue;
   };
   
-  // The hook returns all the state and functions that our UI will need
   return {
     playerDeck,
     computerDeck,
     gameState,
-    setGameState, // <-- ADD THIS LINE
+    setGameState,
     selectedStat,
     roundWinner,
     currentTurn,
     setupGame,
     handleStatSelect,
-    handleNextRound,
     getStatValue,
+    cardsInPlay,
+    finalizeRound,
+    roundNumber, // Export the new roundNumber
   };
 }

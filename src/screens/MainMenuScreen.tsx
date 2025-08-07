@@ -1,6 +1,5 @@
 import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity, SafeAreaView} from 'react-native';
-// --- FIX: Added runOnJS to the import list ---
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, runOnJS } from 'react-native-reanimated';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -15,9 +14,13 @@ function MainMenuScreen({ navigation }: Props) {
       transform: [{ scale: withSpring(isPressed.value ? 0.95 : 1) }],
     };
   });
-  const navigateToLevelSelection = () => {
-    navigation.navigate('LevelSelection');
+  
+  const navigateToGameSelection = () => {
+    // --- THIS IS THE FIX ---
+    // It now correctly navigates to the GameSelection screen.
+    navigation.navigate('GameSelection');
   };
+
   const gesture = Gesture.Tap()
     .onBegin(() => {
       'worklet';
@@ -29,7 +32,7 @@ function MainMenuScreen({ navigation }: Props) {
     })
     .onEnd(() => {
       'worklet';
-      runOnJS(navigateToLevelSelection)();
+      runOnJS(navigateToGameSelection)();
     });
 
   return (

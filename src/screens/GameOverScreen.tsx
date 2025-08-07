@@ -3,20 +3,22 @@ import { SafeAreaView, StyleSheet, View, Text, TouchableOpacity } from 'react-na
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
-// This screen will receive a 'result' parameter ('win' or 'loss')
+// This tells TypeScript what kind of navigation props this screen will receive.
+// It expects a 'result' parameter, which will be either 'win' or 'loss'.
 type Props = NativeStackScreenProps<RootStackParamList, 'GameOver'>;
 
 function GameOverScreen({ route, navigation }: Props) {
-  const { result } = route.params; // Get the result from the navigation parameters
+  // Get the result ('win' or 'loss') that was passed from the GameplayScreen
+  const { result } = route.params;
 
   const handlePlayAgain = () => {
-    // Navigate back to the Gameplay screen and trigger a reset
-    navigation.navigate('Gameplay', { reset: true });
+    // Navigate back to the Gameplay screen. We'll add logic there to reset the game.
+    navigation.replace('Gameplay');
   };
 
   const handleMainMenu = () => {
-    // Navigate back to the Main Menu
-    navigation.navigate('MainMenu');
+    // Navigate back to the Main Menu screen.
+    navigation.popToTop();
   };
 
   return (
@@ -33,7 +35,7 @@ function GameOverScreen({ route, navigation }: Props) {
           <Text style={styles.buttonText}>Play Again</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={handleMainMenu}>
-          <Text style={styles.secondaryButtonText}>Main Menu</Text>
+          <Text style={styles.buttonText}>Main Menu</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -63,7 +65,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#CCCCCC',
     textAlign: 'center',
-    marginBottom: 50,
+    marginBottom: 60,
+    maxWidth: '80%',
   },
   button: {
     backgroundColor: '#2A2A2A',
@@ -82,13 +85,8 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
       backgroundColor: 'transparent',
-      borderColor: '#555',
+      borderColor: '#444',
   },
-  secondaryButtonText: {
-    fontFamily: 'Poppins-SemiBold',
-    color: '#999',
-    fontSize: 18,
-  }
 });
 
 export default GameOverScreen;

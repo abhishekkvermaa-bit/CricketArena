@@ -1,17 +1,52 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { SafeAreaView, StyleSheet, View, Text, TouchableOpacity, Button } from 'react-native';
-import type {NativeStackScreenProps} from '@react-navigation/native-stack';
-import type {RootStackParamList} from '../navigation/AppNavigator';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../navigation/AppNavigator';
 
 import GameTable from '../../src/components/GameTable';
 import StatsSelector from '../../src/components/StatsSelector';
 import { useGameLogic } from '../../src/hooks/useGameLogic';
 
-function GameplayScreen({navigation}: NativeStackScreenProps<RootStackParamList, 'Gameplay'>) {
+// We need to update the props to include 'route' so we can handle "Play Again"
+type Props = NativeStackScreenProps<RootStackParamList, 'Gameplay'>;
+
+function GameplayScreen({ route, navigation }: Props) {
   const {
-    playerDeck, computerDeck, gameState, setGameState, selectedStat, roundWinner, currentTurn,
-    setupGame, handleStatSelect, finalizeRound, cardsInPlay, roundNumber, computerSelectedStat,
+    playerDeck,
+    computerDeck,
+    gameState,
+    setGameState,
+    selectedStat,
+    roundWinner,
+    currentTurn,
+    setupGame,
+    handleStatSelect,
+    finalizeRound,
+    cardsInPlay,
+    roundNumber,
+    computerSelectedStat,
   } = useGameLogic();
+  
+  // --- THIS IS THE FIX ---
+  // This 'effect' watches the game state. When it becomes 'game_over',
+  // it navigates to our new GameOverScreen.
+  useEffect(() => {
+    if (gameState === 'game_over') {
+      navigation.replace('GameOver', {
+        result: playerDeck.length > 0 ? 'win' : 'loss',
+      });
+    }
+  }, [gameState]);
+
+  // This 'effect' watches for the "Play Again" command from the GameOverScreen
+  useEffect(() => {
+    if (route.params?.reset) {
+      setupGame();
+      // Clear the parameter so it doesn't run again on a hot-reload
+      navigation.setParams({ reset: false }); 
+    }
+  }, [route.params?.reset]);
+  // --------------------
   
   const currentPlayerCard = playerDeck.length > 0 ? playerDeck[0] : null;
   const statToHighlight = gameState === 'awaiting_player' ? computerSelectedStat : selectedStat;
@@ -45,20 +80,14 @@ function GameplayScreen({navigation}: NativeStackScreenProps<RootStackParamList,
           <StatsSelector 
             player={currentPlayerCard}
             onStatSelect={handleStatSelect} 
-            // --- THIS IS THE FIX ---
-            // The panel is disabled ONLY if it's the computer's turn AND it has NOT yet selected a stat.
-            disabled={currentTurn === 'computer' && gameState === 'selecting'}
+            disabled={currentTurn === 'computer' && gameState !== 'awaiting_player'}
             computerSelectedStat={computerSelectedStat}
           />
         )}
       </View>
       
-      {gameState === 'game_over' && (
-        <View style={styles.resultContainer}>
-            <Text style={styles.resultText}>{playerDeck.length > 0 ? 'YOU ARE THE CHAMPION!' : 'GAME OVER'}</Text>
-            <Button title="Play Again" onPress={setupGame} />
-        </View>
-      )}
+      {/* The old 'game_over' overlay has now been removed */}
+      
     </SafeAreaView>
   );
 }
@@ -69,8 +98,6 @@ const styles = StyleSheet.create({
     backButtonText: { color: '#FFFFFF', fontSize: 18, fontFamily: 'Poppins-Regular' },
     deckCountText: { color: '#FFFFFF', fontFamily: 'Poppins-SemiBold', fontSize: 14, textAlign: 'right' },
     bottomContainer: { paddingBottom: 20, justifyContent: 'center' },
-    resultContainer: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000000A0', zIndex: 20 },
-    resultText: { fontSize: 32, fontFamily: 'Poppins-Bold', color: '#FFD700', marginBottom: 20, textAlign: 'center' },
 });
 
 export default GameplayScreen;

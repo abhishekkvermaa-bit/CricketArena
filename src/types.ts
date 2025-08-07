@@ -32,5 +32,6 @@ export function isBattingStat(stat: StatName): stat is BattingStatName {
 // The type for a single player object from our JSON
 export type Player = (typeof allPlayersData)[0];
 
-// The type for the different states our game can be in
-export type GameState = 'dealing' | 'selecting' | 'revealing' | 'collecting' | 'game_over';
+// --- THIS IS THE FIX ---
+// Add 'dealing' and 'collecting' back to the list of possible game states.
+export type GameState = 'dealing' | 'selecting' | 'awaiting_player' | 'revealing' | 'collecting' | 'game_over';

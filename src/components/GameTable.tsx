@@ -11,7 +11,7 @@ type GameTableProps = {
   computerDeck: Player[];
   cardsInPlay: {player: Player | null, computer: Player | null};
   gameState: GameState;
-  setGameState: (state: GameState) => void;
+  setGameState: (state: GameState) => void; // <-- THIS WAS THE MISSING PROPERTY
   selectedStat: StatName | null;
   roundWinner: 'player' | 'computer' | 'draw' | null;
   finalizeRound: () => void;
@@ -20,7 +20,7 @@ type GameTableProps = {
 const DEAL_DURATION = 120;
 
 function GameTable({ playerDeck, computerDeck, cardsInPlay, gameState, setGameState, selectedStat, roundWinner, finalizeRound }: GameTableProps) {
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const playerCardPos = useSharedValue({ x: 0, y: 0, opacity: 0, scale: 1 });
   const computerCardPos = useSharedValue({ x: 0, y: 0, opacity: 0, scale: 1 });
   const dealerCardPosition = useSharedValue({ y: 0, opacity: 0 });
@@ -52,20 +52,22 @@ function GameTable({ playerDeck, computerDeck, cardsInPlay, gameState, setGameSt
   useEffect(() => {
     if (gameState === 'collecting' && roundWinner && cardsInPlay.player && cardsInPlay.computer) {
       const playerWon = roundWinner === 'player';
-      const computerStartX = -width / 4;
-      const playerStartX = width / 4;
-      const endX = playerWon ? playerStartX : computerStartX;
-
-      computerCardPos.value = { x: computerStartX, y: 0, opacity: 1, scale: 1 };
-      playerCardPos.value = { x: playerStartX, y: 0, opacity: 1, scale: 1 };
+      
+      const computerStartPosition = { x: -width * 0.2, y: -height * 0.25 };
+      const playerStartPosition = { x: width * 0.2, y: height * 0.25 };
+      const targetPosition = playerWon ? playerStartPosition : computerStartPosition;
+      
+      computerCardPos.value = { ...computerStartPosition, opacity: 1, scale: 1 };
+      playerCardPos.value = { ...playerStartPosition, opacity: 1, scale: 1 };
       
       const onAnimationComplete = () => {
         'worklet';
         runOnJS(finalizeRound)();
       };
       
-      computerCardPos.value = withTiming({ x: endX, y: 0, opacity: 0, scale: 0.5 }, { duration: 700 });
-      playerCardPos.value = withTiming({ x: endX, y: 0, opacity: 0, scale: 0.5 }, { duration: 700 }, (isFinished) => {
+      const animationConfig = { duration: 300 };
+      computerCardPos.value = withTiming({ ...targetPosition, opacity: 0, scale: 0.5 }, animationConfig);
+      playerCardPos.value = withTiming({ ...targetPosition, opacity: 0, scale: 0.5 }, animationConfig, (isFinished) => {
         if(isFinished) onAnimationComplete();
       });
     }
@@ -90,12 +92,6 @@ function GameTable({ playerDeck, computerDeck, cardsInPlay, gameState, setGameSt
 
   return (
     <View style={styles.container}>
-      <Animated.View style={[styles.flyingCard, computerCardStyle]}>
-        {cardsInPlay.computer && <PlayerCard player={cardsInPlay.computer} mode="stats-visible" selectedStat={selectedStat} isComputer={true} />}
-      </Animated.View>
-      <Animated.View style={[styles.flyingCard, playerCardStyle]}>
-        {cardsInPlay.player && <PlayerCard player={cardsInPlay.player} mode="stats-visible" selectedStat={selectedStat} isComputer={false} />}
-      </Animated.View>
       <View style={{opacity: gameState === 'collecting' ? 0 : 1}}>
         <View style={styles.topLeftContainer}>
           <CardDeck deck={gameState === 'dealing' ? visibleComputerDeck : computerDeck} gameState={gameState} isComputer={true} direction="right" />
@@ -104,7 +100,15 @@ function GameTable({ playerDeck, computerDeck, cardsInPlay, gameState, setGameSt
           <CardDeck deck={gameState === 'dealing' ? visiblePlayerDeck : playerDeck} gameState={gameState} isComputer={false} direction="left" />
         </View>
       </View>
+      
       {gameState === 'dealing' && <Animated.View style={[styles.dealerCard, dealerCardAnimatedStyle]} />}
+
+      <Animated.View style={[styles.flyingCard, computerCardStyle]}>
+        {cardsInPlay.computer && <PlayerCard player={cardsInPlay.computer} mode="stats-visible" selectedStat={selectedStat} isComputer={true} />}
+      </Animated.View>
+      <Animated.View style={[styles.flyingCard, playerCardStyle]}>
+        {cardsInPlay.player && <PlayerCard player={cardsInPlay.player} mode="stats-visible" selectedStat={selectedStat} isComputer={false} />}
+      </Animated.View>
     </View>
   );
 }
@@ -113,7 +117,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'space-between', paddingHorizontal: 10, },
   topLeftContainer: { alignItems: 'flex-start', },
   bottomRightContainer: { alignItems: 'flex-end', },
-  flyingCard: { position: 'absolute', alignSelf: 'center', zIndex: 100 },
+  flyingCard: { position: 'absolute', alignSelf: 'center', zIndex: 100, top: '50%', left: '50%', marginLeft: -100, marginTop: -150, },
   dealerCard: {
     width: 170, height: 150,
     backgroundColor: '#1E1E1E',

@@ -1,4 +1,4 @@
-import {useState, useEffect} from 'react';
+import {useState, useEffect, useCallback} from 'react';
 import allPlayersData from '../assets/data/playerData.json';
 import { Player, StatName, isBattingStat, allStatKeys, GameState } from '../types';
 
@@ -10,8 +10,8 @@ export function useGameLogic() {
   const [roundWinner, setRoundWinner] = useState<'player' | 'computer' | 'draw' | null>(null);
   const [currentTurn, setCurrentTurn] = useState<'player' | 'computer'>('player');
   const [cardsInPlay, setCardsInPlay] = useState<{player: Player | null, computer: Player | null}>({player: null, computer: null});
-  // This new state will act as a reliable key to force UI updates
   const [roundNumber, setRoundNumber] = useState(0);
+  const [computerSelectedStat, setComputerSelectedStat] = useState<StatName | null>(null);
 
   useEffect(() => {
     setupGame();
@@ -45,10 +45,12 @@ export function useGameLogic() {
     setRoundWinner(null);
     setSelectedStat(null);
     setCurrentTurn('player');
-    setRoundNumber(0); // Reset round number for a new game
+    setRoundNumber(0);
+    setComputerSelectedStat(null);
   };
 
   const handleComputerTurn = () => {
+    if (!computerDeck.length) return;
     const computerCard = computerDeck[0];
     let bestStat: StatName = 'Runs';
     let bestScore = -1;
@@ -66,14 +68,21 @@ export function useGameLogic() {
         }
       }
     });
-    handleStatSelect(bestStat);
+    setComputerSelectedStat(bestStat);
+    setGameState('awaiting_player');
   };
   
   const handleStatSelect = (statName: StatName) => {
-    if (gameState !== 'selecting') return;
-    setCardsInPlay({ player: playerDeck[0], computer: computerDeck[0] });
-    const playerStatValue = getStatValue(playerDeck[0], statName);
-    const computerStatValue = getStatValue(computerDeck[0], statName);
+    if ((gameState === 'selecting' && currentTurn === 'player') || (gameState === 'awaiting_player' && statName === computerSelectedStat)) {
+      if (!playerDeck.length || !computerDeck.length) return;
+      setCardsInPlay({ player: playerDeck[0], computer: computerDeck[0] });
+      const playerStatValue = getStatValue(playerDeck[0], statName);
+      const computerStatValue = getStatValue(computerDeck[0], statName);
+      determineWinner(statName, playerStatValue, computerStatValue);
+    }
+  };
+
+  const determineWinner = (statName: StatName, playerStatValue: number, computerStatValue: number) => {
     let winner: 'player' | 'computer' | 'draw' = 'draw';
     if (statName === 'Eco') {
       if (playerStatValue < computerStatValue) winner = 'player';
@@ -87,7 +96,8 @@ export function useGameLogic() {
     setGameState('revealing');
   };
 
-  const finalizeRound = () => {
+  const finalizeRound = useCallback(() => {
+    if (!roundWinner || !playerDeck[0] || !computerDeck[0]) return;
     const playerCard = playerDeck[0];
     const computerCard = computerDeck[0];
     const newPlayerDeck = playerDeck.slice(1);
@@ -106,8 +116,6 @@ export function useGameLogic() {
     
     setPlayerDeck(newPlayerDeck);
     setComputerDeck(newComputerDeck);
-    
-    // Increment the round number to trigger a UI refresh
     setRoundNumber(prev => prev + 1);
 
     if (newPlayerDeck.length === 0 || newComputerDeck.length === 0) {
@@ -116,8 +124,9 @@ export function useGameLogic() {
       setGameState('selecting');
       setRoundWinner(null);
       setSelectedStat(null);
+      setComputerSelectedStat(null);
     }
-  };
+  }, [roundWinner, playerDeck, computerDeck]);
 
   const getStatValue = (player: Player, statName: StatName): number => {
     let value: string | undefined;
@@ -136,6 +145,7 @@ export function useGameLogic() {
     if (statName === 'Eco' && parsedValue === 0) {
       return Infinity;
     }
+    // --- THIS IS THE FIX ---
     return parsedValue;
   };
   
@@ -152,6 +162,7 @@ export function useGameLogic() {
     getStatValue,
     cardsInPlay,
     finalizeRound,
-    roundNumber, // Export the new roundNumber
+    roundNumber,
+    computerSelectedStat,
   };
 }

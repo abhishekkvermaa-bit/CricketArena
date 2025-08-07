@@ -9,21 +9,12 @@ import { useGameLogic } from '../../src/hooks/useGameLogic';
 
 function GameplayScreen({navigation}: NativeStackScreenProps<RootStackParamList, 'Gameplay'>) {
   const {
-    playerDeck,
-    computerDeck,
-    gameState,
-    setGameState,
-    selectedStat,
-    roundWinner,
-    currentTurn,
-    setupGame,
-    handleStatSelect,
-    finalizeRound,
-    cardsInPlay,
-    roundNumber,
+    playerDeck, computerDeck, gameState, setGameState, selectedStat, roundWinner, currentTurn,
+    setupGame, handleStatSelect, finalizeRound, cardsInPlay, roundNumber, computerSelectedStat,
   } = useGameLogic();
   
   const currentPlayerCard = playerDeck.length > 0 ? playerDeck[0] : null;
+  const statToHighlight = gameState === 'awaiting_player' ? computerSelectedStat : selectedStat;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -43,7 +34,7 @@ function GameplayScreen({navigation}: NativeStackScreenProps<RootStackParamList,
         computerDeck={computerDeck}
         gameState={gameState}
         setGameState={setGameState}
-        selectedStat={selectedStat}
+        selectedStat={statToHighlight}
         roundWinner={roundWinner}
         cardsInPlay={cardsInPlay}
         finalizeRound={finalizeRound}
@@ -54,7 +45,10 @@ function GameplayScreen({navigation}: NativeStackScreenProps<RootStackParamList,
           <StatsSelector 
             player={currentPlayerCard}
             onStatSelect={handleStatSelect} 
-            disabled={currentTurn !== 'player' || gameState !== 'selecting'}
+            // --- THIS IS THE FIX ---
+            // The panel is disabled ONLY if it's the computer's turn AND it has NOT yet selected a stat.
+            disabled={currentTurn === 'computer' && gameState === 'selecting'}
+            computerSelectedStat={computerSelectedStat}
           />
         )}
       </View>
@@ -65,12 +59,6 @@ function GameplayScreen({navigation}: NativeStackScreenProps<RootStackParamList,
             <Button title="Play Again" onPress={setupGame} />
         </View>
       )}
-
-      <View style={styles.debugContainer}>
-        <Text style={styles.debugText}>State: {gameState}</Text>
-        <Text style={styles.debugText}>Turn: {currentTurn}</Text>
-        <Text style={styles.debugText}>Round: {roundNumber}</Text>
-      </View>
     </SafeAreaView>
   );
 }
@@ -83,8 +71,6 @@ const styles = StyleSheet.create({
     bottomContainer: { paddingBottom: 20, justifyContent: 'center' },
     resultContainer: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000000A0', zIndex: 20 },
     resultText: { fontSize: 32, fontFamily: 'Poppins-Bold', color: '#FFD700', marginBottom: 20, textAlign: 'center' },
-    debugContainer: { position: 'absolute', bottom: 0, left: 0, backgroundColor: '#00000080', padding: 5, },
-    debugText: { color: '#FFFFFF', fontSize: 10, },
 });
 
 export default GameplayScreen;

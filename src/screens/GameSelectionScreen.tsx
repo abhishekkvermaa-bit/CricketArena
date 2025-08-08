@@ -1,12 +1,19 @@
 import React from 'react';
-import { SafeAreaView, StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context'; // <-- Updated import
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
+import { useSounds } from '../hooks/useSounds';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'GameSelection'>;
 
-// We'll define our list of games here
-const games = [
+interface Game {
+  name: string;
+  isLocked: boolean;
+  screen?: 'ModeSelection';
+}
+
+const games: Game[] = [
   { name: 'Trump Cards', isLocked: false, screen: 'ModeSelection' },
   { name: 'Book Cricket', isLocked: true },
   { name: '500k Runs Challenge', isLocked: true },
@@ -14,10 +21,25 @@ const games = [
 ];
 
 function GameSelectionScreen({ navigation }: Props) {
+  const { playButtonClick } = useSounds();
+  const insets = useSafeAreaInsets(); // <-- NEW: Get safe area insets
+
+  const handleGameSelect = (game: Game): void => {
+    playButtonClick();
+    if (!game.isLocked && game.screen) {
+      navigation.navigate(game.screen);
+    }
+  };
+
+  const handleBack = (): void => {
+    playButtonClick();
+    navigation.goBack();
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}> {/* <-- Updated */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={handleBack}>
           <Text style={styles.backButtonText}>{'< Back'}</Text>
         </TouchableOpacity>
       </View>
@@ -28,8 +50,7 @@ function GameSelectionScreen({ navigation }: Props) {
           <TouchableOpacity 
             key={game.name}
             style={[styles.button, game.isLocked && styles.lockedButton]} 
-            // Only navigate if the game is not locked
-            onPress={() => !game.isLocked && navigation.navigate(game.screen as any)}
+            onPress={() => handleGameSelect(game)}
             disabled={game.isLocked}
           >
             <Text style={styles.buttonText}>{game.name}</Text>
@@ -41,7 +62,7 @@ function GameSelectionScreen({ navigation }: Props) {
           </TouchableOpacity>
         ))}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -53,11 +74,13 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingTop: 10,
+    paddingBottom: 10, // <-- Added bottom padding
   },
   content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 20, // <-- Added horizontal padding
   },
   title: {
     fontFamily: 'Poppins-Bold',

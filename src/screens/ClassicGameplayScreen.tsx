@@ -1,8 +1,8 @@
 import React from 'react';
-import { SafeAreaView, StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
-
 import GameTable from '../../src/components/GameTable';
 import StatsSelector from '../../src/components/StatsSelector';
 import { useClassicGameLogic } from '../../src/hooks/useClassicGameLogic';
@@ -18,7 +18,6 @@ function ClassicGameplayScreen({ route, navigation }: NativeStackScreenProps<Roo
 
   React.useEffect(() => {
     if (gameState === 'game_over') {
-      // Pass the reason and mode to the GameOver screen
       const reason = timeLeft <= 0 ? 'time_up' : 'all_cards';
       navigation.replace('GameOver', {
         result: playerDeck.length > computerDeck.length ? 'win' : 'loss',
@@ -42,7 +41,8 @@ function ClassicGameplayScreen({ route, navigation }: NativeStackScreenProps<Roo
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="light-content" backgroundColor="#0a0a0a" />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.backButtonText}>{'< Modes'}</Text>
@@ -54,17 +54,19 @@ function ClassicGameplayScreen({ route, navigation }: NativeStackScreenProps<Roo
         </View>
       </View>
 
-      <GameTable 
-        key={roundNumber}
-        playerDeck={playerDeck}
-        computerDeck={computerDeck}
-        gameState={gameState}
-        setGameState={setGameState}
-        selectedStat={statToHighlight}
-        roundWinner={roundWinner}
-        cardsInPlay={cardsInPlay}
-        finalizeRound={finalizeRound}
-      />
+      <View style={styles.gameArea}>
+        <GameTable 
+          key={roundNumber}
+          playerDeck={playerDeck}
+          computerDeck={computerDeck}
+          gameState={gameState}
+          setGameState={setGameState}
+          selectedStat={statToHighlight}
+          roundWinner={roundWinner}
+          cardsInPlay={cardsInPlay}
+          finalizeRound={finalizeRound}
+        />
+      </View>
       
       <View style={styles.bottomContainer}>
         {currentPlayerCard && (
@@ -81,12 +83,45 @@ function ClassicGameplayScreen({ route, navigation }: NativeStackScreenProps<Roo
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#0a0a0a' },
-    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 10, },
-    backButtonText: { color: '#FFFFFF', fontSize: 18, fontFamily: 'Poppins-Regular' },
-    timerText: { color: '#FFD700', fontFamily: 'Poppins-Bold', fontSize: 22, },
-    deckCountText: { color: '#FFFFFF', fontFamily: 'Poppins-SemiBold', fontSize: 14, textAlign: 'right' },
-    bottomContainer: { paddingBottom: 20, justifyContent: 'center' },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#0a0a0a' 
+  },
+  header: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    paddingHorizontal: 20, 
+    paddingVertical: 8, // Reduced padding
+    height: 50, // Reduced height
+  },
+  gameArea: {
+    flex: 1,
+    marginVertical: 5, // Small margins
+  },
+  backButtonText: { 
+    color: '#FFFFFF', 
+    fontSize: 18, 
+    fontFamily: 'Poppins-Regular' 
+  },
+  timerText: { 
+    color: '#FFD700', 
+    fontFamily: 'Poppins-Bold', 
+    fontSize: 20 // Slightly smaller
+  },
+  deckCountText: { 
+    color: '#FFFFFF', 
+    fontFamily: 'Poppins-SemiBold', 
+    fontSize: 14, 
+    textAlign: 'right' 
+  },
+  bottomContainer: { 
+    height: 160, // Reduced height
+    justifyContent: 'center',
+    paddingBottom: 5,
+    paddingTop: 5,
+  },
 });
+
 
 export default ClassicGameplayScreen;

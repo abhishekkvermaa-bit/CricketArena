@@ -1,13 +1,16 @@
 import React from 'react';
-import { SafeAreaView, StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context'; // <-- Updated import
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ModeSelection'>;
 
 function ModeSelectionScreen({ navigation }: Props) {
+  const insets = useSafeAreaInsets(); // <-- NEW: Get safe area insets
+
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}> {/* <-- Updated */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.backButtonText}>{'< Back'}</Text>
@@ -32,7 +35,7 @@ function ModeSelectionScreen({ navigation }: Props) {
           <Text style={styles.buttonSubtitle}>Play until one player has all the cards.</Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -44,11 +47,13 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingTop: 10,
+    paddingBottom: 10, // <-- Added bottom padding
   },
   content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 20, // <-- Added horizontal padding
   },
   title: {
     fontFamily: 'Poppins-Bold',

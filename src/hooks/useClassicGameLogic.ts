@@ -15,10 +15,11 @@ export function useClassicGameLogic() {
 
   useEffect(() => { setupGame(); }, []);
 
-  // Timer now only runs when it's time to play ('selecting' or 'awaiting_player')
+  // Timer logic - only runs when game is active
   useEffect(() => {
     if (gameState === 'selecting' || gameState === 'awaiting_player') {
       if (timeLeft <= 0) {
+        console.log('⏰ Game over - Time up!');
         setGameState('game_over');
         return;
       }
@@ -28,6 +29,25 @@ export function useClassicGameLogic() {
       return () => clearInterval(interval);
     }
   }, [timeLeft, gameState]);
+
+  // 🔧 FIX: Check for instant win condition after each round
+  useEffect(() => {
+    if (gameState === 'selecting' || gameState === 'awaiting_player' || gameState === 'revealing') {
+      // Check if someone has all cards (instant win)
+      if (playerDeck.length === 0 || computerDeck.length === 0) {
+        console.log('🃏 Game over - All cards taken!');
+        setGameState('game_over');
+        return;
+      }
+      
+      // Check if someone has 20 cards (all cards)
+      if (playerDeck.length === 20 || computerDeck.length === 20) {
+        console.log('🃏 Game over - One player has all cards!');
+        setGameState('game_over');
+        return;
+      }
+    }
+  }, [playerDeck.length, computerDeck.length, gameState]);
 
   useEffect(() => {
     if (currentTurn === 'computer' && gameState === 'selecting' && computerDeck.length > 0) {
@@ -66,9 +86,15 @@ export function useClassicGameLogic() {
     allStatKeys.forEach(stat => {
       const statValue = getStatValue(computerCard, stat);
       if (stat === 'Eco') {
-        if (statValue < (bestScore === -1 ? 1000 : bestScore) && statValue !== Infinity) { bestScore = statValue; bestStat = stat; }
+        if (statValue < (bestScore === -1 ? 1000 : bestScore) && statValue !== Infinity) { 
+          bestScore = statValue; 
+          bestStat = stat; 
+        }
       } else {
-        if (statValue > bestScore) { bestScore = statValue; bestStat = stat; }
+        if (statValue > bestScore) { 
+          bestScore = statValue; 
+          bestStat = stat; 
+        }
       }
     });
     setComputerSelectedStat(bestStat);
@@ -116,14 +142,24 @@ export function useClassicGameLogic() {
       newComputerDeck.push(computerCard);
     }
     
-    // Check for instant win/loss condition
+    // 🔧 FIX: Check for instant win immediately after updating decks
     if (newPlayerDeck.length === 0 || newComputerDeck.length === 20) {
+      console.log('🃏 Player lost all cards - Game Over!');
+      setPlayerDeck(newPlayerDeck);
+      setComputerDeck(newComputerDeck);
+      setGameState('game_over');
+      return;
+    }
+    
+    if (newComputerDeck.length === 0 || newPlayerDeck.length === 20) {
+      console.log('🃏 Player won all cards - Game Over!');
       setPlayerDeck(newPlayerDeck);
       setComputerDeck(newComputerDeck);
       setGameState('game_over');
       return;
     }
 
+    // Continue game if no instant win
     setPlayerDeck(newPlayerDeck);
     setComputerDeck(newComputerDeck);
     setRoundNumber(prev => prev + 1);
@@ -154,9 +190,19 @@ export function useClassicGameLogic() {
   };
   
   return {
-    playerDeck, computerDeck, gameState, setGameState, selectedStat, roundWinner, currentTurn,
-    setupGame, handleStatSelect, getStatValue,
-    roundNumber, computerSelectedStat, timeLeft,
+    playerDeck, 
+    computerDeck, 
+    gameState, 
+    setGameState, 
+    selectedStat, 
+    roundWinner, 
+    currentTurn,
+    setupGame, 
+    handleStatSelect, 
+    getStatValue,
+    roundNumber, 
+    computerSelectedStat, 
+    timeLeft,
     cardsInPlay: { player: playerDeck[0], computer: computerDeck[0] },
     finalizeRound,
   };

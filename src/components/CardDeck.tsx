@@ -30,7 +30,7 @@ function CardDeck({deck, gameState, isComputer, selectedStat, isBlurred = false,
     <View style={styles.deckContainer}>
       {stack.map((_, index) => {
         const isTopCard = index === cardsToShow - 1;
-        const offset = direction === 'left' ? -10 : 10;
+        const offset = direction === 'left' ? -12 : 12; // ← Increased offset for bigger cards
         const cardStyle = {
           position: 'absolute' as 'absolute',
           transform: [{translateX: index * offset}],
@@ -59,8 +59,20 @@ function CardDeck({deck, gameState, isComputer, selectedStat, isBlurred = false,
 }
 
 const styles = StyleSheet.create({
-  deckContainer: { width: 200 + (10 * 10), height: 320, justifyContent: 'center', alignItems: 'center' },
-  cardBack: { width: 200, height: 300, backgroundColor: '#1E1E1E', borderRadius: 20, borderWidth: 5, borderColor: '#D4AF37' },
+  deckContainer: { 
+    width: 200 + (12 * 10), // ← Increased width for bigger cards
+    height: 280, // ← Increased height for bigger cards
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
+  cardBack: { 
+    width: 180, // ← Increased from 150 to 180
+    height: 240, // ← Increased from 200 to 240
+    backgroundColor: '#1E1E1E', 
+    borderRadius: 18, // ← Slightly larger border radius
+    borderWidth: 4, // ← Increased border width
+    borderColor: '#D4AF37' 
+  },
 });
 
 export default CardDeck;

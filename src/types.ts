@@ -29,9 +29,24 @@ export function isBattingStat(stat: StatName): stat is BattingStatName {
     return (battingStatKeys as readonly string[]).includes(stat);
 }
 
+// Safe getter for player stats
+export const getPlayerStatValue = (player: Player, statName: StatName): string | undefined => {
+  if (isBattingStat(statName)) {
+    const battingStats = player.battingStats?.ODI;
+    if (!battingStats) return undefined;
+    
+    // Use type assertion to access the properties safely
+    return (battingStats as any)[statName];
+  } else {
+    const bowlingStats = player.bowlingStats?.ODI;
+    if (!bowlingStats) return undefined;
+    
+    // Use type assertion to access the properties safely
+    return (bowlingStats as any)[statName];
+  }
+};
+
 // The type for a single player object from our JSON
 export type Player = (typeof allPlayersData)[0];
 
-// --- THIS IS THE FIX ---
-// Add 'dealing' and 'collecting' back to the list of possible game states.
 export type GameState = 'dealing' | 'selecting' | 'awaiting_player' | 'revealing' | 'collecting' | 'game_over';

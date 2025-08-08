@@ -1,15 +1,23 @@
 import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
-import { allStatKeys, StatName, statDisplayNames } from '../types';
+import { allStatKeys, StatName, statDisplayNames, Player, getPlayerStatValue } from '../types';
+import { useSounds } from '../hooks/useSounds';
 
 type StatsSelectorProps = {
   onStatSelect: (statName: StatName) => void;
-  player: any;
+  player: Player;
   disabled: boolean;
   computerSelectedStat?: StatName | null;
 };
 
 function StatsSelector({onStatSelect, player, disabled, computerSelectedStat}: StatsSelectorProps) {
+  const { playCardSelect } = useSounds();
+
+  const handleStatSelect = (stat: StatName): void => {
+    playCardSelect();
+    onStatSelect(stat);
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.heading}>Stats</Text>
@@ -21,10 +29,12 @@ function StatsSelector({onStatSelect, player, disabled, computerSelectedStat}: S
             <TouchableOpacity
               key={stat}
               style={[ styles.statChip, isHighlighted && styles.highlightedChip, isDisabled && styles.disabledChip ]}
-              onPress={() => onStatSelect(stat)}
+              onPress={() => handleStatSelect(stat)}
               disabled={isDisabled}>
               <Text style={styles.statLabel}>{statDisplayNames[stat]}</Text>
-              <Text style={styles.statValue}>{player.battingStats?.ODI?.[stat] ?? player.bowlingStats?.ODI?.[stat] ?? '-'}</Text>
+              <Text style={styles.statValue}>
+                {getPlayerStatValue(player, stat) ?? '-'}
+              </Text>
             </TouchableOpacity>
           );
         })}

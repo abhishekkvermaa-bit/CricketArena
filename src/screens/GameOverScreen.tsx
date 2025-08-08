@@ -1,33 +1,48 @@
-import React from 'react';
-import { SafeAreaView, StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import React, { useEffect } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context'; // <-- Updated import
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
+import { useSounds } from '../hooks/useSounds';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'GameOver'>;
 
 function GameOverScreen({ route, navigation }: Props) {
+  const { playGameWin, playGameLose, playButtonClick } = useSounds();
+  const insets = useSafeAreaInsets(); // <-- NEW: Get safe area insets
   const { result, reason, mode } = route.params;
 
-  const handlePlayAgain = () => {
-    // Navigate to the correct screen based on the mode played
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (result === 'win') {
+        playGameWin();
+      } else {
+        playGameLose();
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [result, playGameWin, playGameLose]);
+
+  const handlePlayAgain = (): void => {
+    playButtonClick();
     navigation.replace(mode, { reset: true });
   };
 
-  const handleMainMenu = () => {
+  const handleMainMenu = (): void => {
+    playButtonClick();
     navigation.popToTop();
   };
 
-  // Choose the subtitle based on the reason the game ended
-  const getSubtitle = () => {
+  const getSubtitle = (): string => {
     if (reason === 'time_up') {
       return result === 'win' ? "Time's up! You had more cards." : "Time's up! The computer had more cards.";
     }
-    // Default 'all_cards' reason
     return result === 'win' ? 'You have collected all the cards.' : 'The computer has collected all your cards.';
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}> {/* <-- Updated */}
       <View style={styles.content}>
         <Text style={styles.title}>
           {result === 'win' ? 'YOU ARE THE CHAMPION!' : 'GAME OVER'}
@@ -41,7 +56,7 @@ function GameOverScreen({ route, navigation }: Props) {
           <Text style={styles.buttonText}>Main Menu</Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

@@ -4,7 +4,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserStats, StatsUpdate } from '../types/statistics';
 import { useAuth } from './useAuth';
 
-
 const INITIAL_STATS: Omit<UserStats, 'uid' | 'createdAt' | 'updatedAt'> = {
   totalGamesPlayed: 0,
   totalGamesWon: 0,
@@ -43,10 +42,8 @@ export function useUserStats() {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isOnline, setIsOnline] = useState(true);
-  const [isUpdating, setIsUpdating] = useState(false); // ✅ Add updating state
+  const [isUpdating, setIsUpdating] = useState(false);
 
-
-  // ✅ FIXED: Initialize user stats with proper function calls
   useEffect(() => {
     async function initializeUserStats() {
       if (!user) {
@@ -57,48 +54,38 @@ export function useUserStats() {
 
       try {
         if (user.isAnonymous) {
-          await loadLocalStats();
+          // ✅ FIX: Guest users get fresh stats every session
+          await createFreshGuestStats();
         } else {
+          // Authenticated users get persistent stats
           await loadFirestoreStats();
         }
       } catch (error) {
         console.error('❌ Error loading user stats:', error);
-        await loadLocalStats();
+        await createFreshGuestStats();
       }
     }
 
-    // ✅ Call the function properly
     initializeUserStats();
   }, [user]);
 
-  const loadLocalStats = async () => {
+  // ✅ NEW: Create fresh stats for guest users (session-only)
+  const createFreshGuestStats = async () => {
     if (!user) return;
 
-    try {
-      const localStatsJson = await AsyncStorage.getItem(`stats_${user.uid}`);
-      
-      if (localStatsJson) {
-        const localStats: UserStats = JSON.parse(localStatsJson);
-        setStats(localStats);
-      } else {
-        const newStats: UserStats = {
-          uid: user.uid,
-          ...INITIAL_STATS,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        
-        await AsyncStorage.setItem(`stats_${user.uid}`, JSON.stringify(newStats));
-        setStats(newStats);
-      }
-      
-      setIsLoading(false);
-    } catch (error) {
-      console.error('❌ Error loading local stats:', error);
-      setIsLoading(false);
-    }
+    const newStats: UserStats = {
+      uid: user.uid,
+      ...INITIAL_STATS,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    console.log('👤 Created fresh guest session stats');
+    setStats(newStats);
+    setIsLoading(false);
   };
 
+  // ✅ UPDATED: Only load persistent stats for authenticated users
   const loadFirestoreStats = async () => {
     if (!user || user.isAnonymous) return;
 
@@ -109,7 +96,10 @@ export function useUserStats() {
       if (doc.exists()) {
         const firestoreStats = doc.data() as UserStats;
         setStats(firestoreStats);
+        
+        // Save to local storage for offline access
         await AsyncStorage.setItem(`stats_${user.uid}`, JSON.stringify(firestoreStats));
+        console.log('☁️ Loaded persistent stats from Firestore');
       } else {
         await createInitialFirestoreStats();
       }
@@ -119,7 +109,33 @@ export function useUserStats() {
     } catch (error) {
       console.error('❌ Error loading Firestore stats:', error);
       setIsOnline(false);
+      // Try to load from local storage
       await loadLocalStats();
+    }
+  };
+
+  // ✅ UPDATED: Load local persistent stats (authenticated users only)
+  const loadLocalStats = async () => {
+    if (!user || user.isAnonymous) {
+      await createFreshGuestStats();
+      return;
+    }
+
+    try {
+      const localStatsJson = await AsyncStorage.getItem(`stats_${user.uid}`);
+      
+      if (localStatsJson) {
+        const localStats: UserStats = JSON.parse(localStatsJson);
+        setStats(localStats);
+        console.log('💾 Loaded persistent stats from local storage');
+      } else {
+        await createInitialFirestoreStats();
+      }
+      
+      setIsLoading(false);
+    } catch (error) {
+      console.error('❌ Error loading local stats:', error);
+      await createFreshGuestStats();
     }
   };
 
@@ -137,12 +153,13 @@ export function useUserStats() {
       const docRef = firestore().collection('users').doc(user.uid).collection('profile').doc('stats');
       await docRef.set(newStats);
       setStats(newStats);
+      
+      // Save locally too
       await AsyncStorage.setItem(`stats_${user.uid}`, JSON.stringify(newStats));
-      console.log('✅ Created initial Firestore stats');
+      console.log('✅ Created initial persistent stats');
     } catch (error) {
       console.error('❌ Error creating Firestore stats:', error);
       setStats(newStats);
-      await AsyncStorage.setItem(`stats_${user.uid}`, JSON.stringify(newStats));
     }
   };
 
@@ -152,7 +169,6 @@ export function useUserStats() {
       return;
     }
 
-    // ✅ FIX: Prevent concurrent updates
     if (isUpdating) {
       console.log('⚠️ Stats update already in progress, skipping...');
       return;
@@ -165,9 +181,11 @@ export function useUserStats() {
       
       const updatedStats = calculateUpdatedStats(stats, gameUpdate);
       setStats(updatedStats);
-      await AsyncStorage.setItem(`stats_${user.uid}`, JSON.stringify(updatedStats));
       
+      // ✅ FIX: Only save to persistent storage for authenticated users
       if (!user.isAnonymous) {
+        await AsyncStorage.setItem(`stats_${user.uid}`, JSON.stringify(updatedStats));
+        
         try {
           const docRef = firestore().collection('users').doc(user.uid).collection('profile').doc('stats');
           await docRef.set(updatedStats);
@@ -177,13 +195,15 @@ export function useUserStats() {
           console.error('❌ Error updating Firestore stats:', error);
           setIsOnline(false);
         }
+      } else {
+        console.log('👤 Guest stats updated (session-only)');
       }
 
       checkAchievements(stats, updatedStats);
     } catch (error) {
       console.error('❌ Error updating stats:', error);
     } finally {
-      setIsUpdating(false); // ✅ Always reset updating state
+      setIsUpdating(false);
     }
   };
 
@@ -294,7 +314,7 @@ export function useUserStats() {
     
     try {
       if (user.isAnonymous) {
-        await loadLocalStats();
+        await createFreshGuestStats();
       } else {
         await loadFirestoreStats();
       }
@@ -307,6 +327,7 @@ export function useUserStats() {
     stats,
     isLoading,
     isOnline,
+    isUpdating,
     updateStats,
     refreshStats,
   };

@@ -7,7 +7,7 @@ import ModeSelectionScreen from '../screens/ModeSelectionScreen';
 import GameplayScreen from '../screens/GameplayScreen';
 import ClassicGameplayScreen from '../screens/ClassicGameplayScreen';
 import GameOverScreen from '../screens/GameOverScreen';
-import LoginScreen from '../screens/LoginScreen';
+import EnhancedLoginScreen from '../screens/EnhancedLoginScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import StatisticsScreen from '../screens/StatisticsScreen';
 
@@ -54,7 +54,7 @@ function AppNavigator() {
       ) : (
         <React.Fragment>
           <Stack.Screen name="Login">
-            {() => <LoginScreen onLoginSuccess={() => {}} />}
+            {() => <EnhancedLoginScreen onLoginSuccess={() => {}} />}
           </Stack.Screen>
         </React.Fragment>
       )}

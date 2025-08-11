@@ -31,12 +31,12 @@ export interface UserStats {
   
   // Cricket-Themed Achievements
   achievements: {
-    firstBoundary: boolean;
-    hatTrickHero: boolean;
-    centuryMaker: boolean;
-    lightningStrike: boolean;
-    fireBrand: boolean;
-    captainCool: boolean;
+    firstBoundary: boolean;     // First win
+    hatTrickHero: boolean;      // 3-win streak  
+    centuryMaker: boolean;      // 100 total wins
+    lightningStrike: boolean;   // Win Classic in under 30s
+    fireBrand: boolean;         // 10-win streak
+    captainCool: boolean;       // 75% win rate in last 20 games
   };
   
   // Session Info
@@ -50,11 +50,13 @@ export interface GameSession {
   uid: string;
   gameMode: 'classic' | 'endless';
   result: 'win' | 'loss';
-  duration: number;
+  duration: number;             // Game duration in seconds
   endReason: 'time_up' | 'all_cards';
   timestamp: string;
-  playerCards: number;
-  computerCards: number;
+  
+  // Game-specific data
+  playerCards: number;          // Cards won by player
+  computerCards: number;        // Cards won by computer
 }
 
 export interface StatsUpdate {

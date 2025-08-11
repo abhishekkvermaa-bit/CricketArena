@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "767476034345",
+    "project_id": "gully-trumps",
+    "storage_bucket": "gully-trumps.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:767476034345:android:24d89935a785490175e538",
+        "android_client_info": {
+          "package_name": "com.cricketarena"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "767476034345-8nt3q13s9spgqc2c9k05fcosh4o4frok.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cricketarena",
+            "certificate_hash": "d95d0d9e4784004a4f4f39601f8b1a62fe666778"
+          }
+        },
+        {
+          "client_id": "767476034345-8g7hsg72ub9kd2m976c0icnvd16okd8c.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC505RR4h5Q1ysBrTgQI7Pp3q9GYq--j44"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "767476034345-8g7hsg72ub9kd2m976c0icnvd16okd8c.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -116,10 +116,11 @@ const styles = StyleSheet.create({
     textAlign: 'right' 
   },
   bottomContainer: { 
-    height: 160, // Reduced height
+    height: 130,
     justifyContent: 'center',
-    paddingBottom: 5,
+    paddingBottom: 10,
     paddingTop: 5,
+    marginBottom: 75, 
   },
 });
 

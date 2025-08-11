@@ -7,6 +7,9 @@ import { useAuth } from '../hooks/useAuth';
 import { useSounds } from '../hooks/useSounds';
 import { useUserStats } from '../hooks/useUserStats';
 
+import { Modal } from 'react-native'; // Add this import
+
+
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
 function SettingsScreen({ navigation }: Props) {
